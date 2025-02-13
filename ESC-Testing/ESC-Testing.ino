@@ -4,29 +4,32 @@ Servo ESC;
 
 void setup() {
   // put your setup code here, to run once:
-  
+  Serial.begin(9600);
+
   ESC.attach(9, 1000, 2000);
+
+  delay(2000);
 }
 
+int value = 140;
 void loop() {
-  // put your main code here, to run repeatedly:
+  ESC.write(value);
 
-  ESC.write(0);
+  if (Serial.available() > 0) {
+    int temp = Serial.parseInt();
+    if (temp > 1) {
+      value = temp;
+    } else if (temp == 1) {
+      ESC.write(0);
+      delay(500);
 
-  delay(1000);
-
-  int speed = 0;
-  for (int i = 1; i <= 10; i++) {
-    speed += 10 * i;
-    ESC.write(speed);
-    delay(500);
+      for (int i = 0; i <= value/10; i++) {
+        ESC.write(i * 10);
+        delay(500);
+      }
+    }
   }
 
-  delay(1000);
-  
-  for (int i = 1; i <= 10; i++) {
-    speed -= 10 * i;
-    ESC.write(speed);
-    delay(500);
-  }
+  Serial.println(value);
+  delay(500);
 }
