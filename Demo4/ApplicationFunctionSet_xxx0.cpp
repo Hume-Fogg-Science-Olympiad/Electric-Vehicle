@@ -16,6 +16,9 @@ enum ConquerorCarMotionControl
   stop_it        //(9)
 };               //direction方向:（1）、（2）、 （3）、（4）、（5）、（6）
 
+static float Yaw = 0;
+static int rotations[8] = {0, 90, -180, -90, 45, 135, -135, -45};
+
 struct Application_xxx
 {
   ConquerorCarMotionControl Motion_Control;
@@ -25,23 +28,20 @@ extern Application_xxx Application_ConquerorCarxxx0;
 
 static void ApplicationFunctionSet_ConquerorCarLinearMotionControl(ConquerorCarMotionControl direction, uint8_t directionRecord, uint8_t speed, uint8_t Kp, uint8_t UpperLimit)
 {
-  static float Yaw; //偏航
   static float yaw_So = 0;
-  static uint8_t en = 110;
+  uint8_t en = 110;
   static unsigned long is_time;
   if (en != directionRecord || millis() - is_time > 10)
   {
-    AppMotor.DeviceDriverSet_Motor_control(/*direction_A*/ direction_void, /*speed_A*/ 0,
-                                           /*direction_B*/ direction_void, /*speed_B*/ 0, /*controlED*/ control_enable); //Motor control
     AppMPU6050getdata.MPU6050_dveGetEulerAngles(&Yaw);
-   
+
     is_time = millis();
   }
-   if(en != directionRecord )
-   {
+  if(en != directionRecord )
+  {
     en = directionRecord;
     yaw_So = Yaw;
-   }
+  }
    
   //加入比例常数Kp
   int R = (Yaw - yaw_So) * Kp + speed;
