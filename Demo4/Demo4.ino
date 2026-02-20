@@ -9,14 +9,14 @@ int time1 = 0;
 int time2 = 0;
 ConquerorCarMotionControl status = Forward;
 
-int distance = 30; //IN CENTIMETERS
+int distance = 100; //IN CENTIMETERS
 int height = 10; //IN CENTIMETERS
 
 // Constant for steps in disk
 float stepcount = 20.00;  // 20 Slots in disk, change if different
 
 // Constant for wheel diameter
-float wheeldiameter = 66.50; // Wheel diameter in millimeters, change if different
+float wheeldiameter = 50.8; // Wheel diameter in millimeters, change if different
 
 //Optical Interruptor Pins
 byte MOTOR_FL = 18;
@@ -74,8 +74,8 @@ void turn(int degree) {
   bool turnDirection = Yaw < desiredYaw;
 
   double m_kP = 0.25;
-  int lowerBound = 50;
-  int upperBound = 100;
+  int lowerBound = 75;
+  int upperBound = 150;
 
   //abs(Yaw - desiredYaw) > 0.3
   while (abs(Yaw - desiredYaw) > 0.3) {
@@ -108,7 +108,7 @@ void turn(int degree) {
 }
 
 void loop() {
-  Serial.println(counter);
+  Serial.println(counter_FL);
   int stepNum = 0;
   switch (counter) {
     case 0:
