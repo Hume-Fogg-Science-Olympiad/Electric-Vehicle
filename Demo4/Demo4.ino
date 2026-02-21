@@ -11,7 +11,7 @@ ConquerorCarMotionControl status = Forward;
 
 int distance = 100; //IN CENTIMETERS
 int height = 10; //IN CENTIMETERS
-int targetTime = 10; //IN SECONDS
+int targetTime =  20; //IN SECONDS
 
 // Constant for steps in disk
 float stepcount = 20.00;  // 20 Slots in disk, change if different
@@ -32,6 +32,7 @@ int counter = 0;
 unsigned long start = 0;
 unsigned long end = 0;
 unsigned long currentTime = millis();
+long turnTime = 0;
 
 double delayTime = 0;
 
@@ -123,7 +124,12 @@ void loop() {
   if (!delayBool) {
     switch (counter) {
       case 0:
+        start = millis();
         turn(45);
+        end = millis();
+
+        turnTime = end - start;
+
         counter++;
         break;
       case 1:
@@ -137,9 +143,9 @@ void loop() {
         if (counter_FR >= stepNum && counter_FL >= stepNum) {
           end = millis();
           long deltaTime = end - start;
-          long speed = ((double) height * sqrt(2)) / deltaTime;
-          long timeElapsed = speed * ((distance - 2 * height) + 2 * ((double) height * sqrt(2)));
-          delayTime = (targetTime - timeElapsed) / 2;
+          long speed = ((long) height * sqrt(2)) / deltaTime;
+          long timeElapsed = (((distance - 2 * height) + 2 * ((long) height * sqrt(2))) / speed) + (3 * turnTime);
+          delayTime = (targetTime * 1000 - timeElapsed) / 4;
 
           if (delayTime < 0) delayTime = 0;
           else if (delayTime > 3000) delayTime = 2500;
@@ -156,6 +162,9 @@ void loop() {
       case 2:
         turn(0);
         counter++;
+
+        currentTime = millis();
+        delayBool = true;
         break;
       case 3:
         stepNum = CMtoSteps(distance - 2 * height);
@@ -173,6 +182,9 @@ void loop() {
       case 4:
         turn(-45);
         counter++;
+        
+        currentTime = millis();
+        delayBool = true;
         break;
       case 5:
         stepNum = CMtoSteps((int) (height * sqrt(2)));
