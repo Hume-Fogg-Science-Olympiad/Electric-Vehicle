@@ -11,6 +11,7 @@ ConquerorCarMotionControl status = Forward;
 
 int distance = 100; //IN CENTIMETERS
 int height = 10; //IN CENTIMETERS
+int targetTime = 10; //IN SECONDS
 
 // Constant for steps in disk
 float stepcount = 20.00;  // 20 Slots in disk, change if different
@@ -27,6 +28,15 @@ int counter_FL = 0;
 int counter_FR = 0;
 
 int counter = 0;
+
+unsigned long start = 0;
+unsigned long end = 0;
+unsigned long currentTime = millis();
+
+double delayTime = 0;
+
+bool delayBool = false;
+bool firstTime = false;
 
 // Interrupt Service Routines
 
@@ -108,54 +118,78 @@ void turn(int degree) {
 }
 
 void loop() {
-  Serial.println(counter_FL);
   int stepNum = 0;
-  switch (counter) {
-    case 0:
-      turn(45);
-      counter++;
-      break;
-    case 1:
-      stepNum = CMtoSteps((int) (height * sqrt(2)));
-      ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 225 /*speed*/);
-      if (counter_FR >= stepNum && counter_FL >= stepNum) {
+
+  if (!delayBool) {
+    switch (counter) {
+      case 0:
+        turn(45);
         counter++;
-        ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
-        counter_FL = 0;
-        counter_FR = 0;
-      }
-      break;
-    case 2:
-      turn(0);
-      counter++;
-      break;
-    case 3:
-      stepNum = CMtoSteps(distance - 2 * height);
-      ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 225 /*speed*/);
-      if (counter_FR >= stepNum && counter_FL >= stepNum) {
+        break;
+      case 1:
+        if (!firstTime) {
+          firstTime = true;
+          start = millis();
+        }
+
+        stepNum = CMtoSteps((int) (height * sqrt(2)));
+        ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 225 /*speed*/);
+        if (counter_FR >= stepNum && counter_FL >= stepNum) {
+          end = millis();
+          long deltaTime = end - start;
+          long speed = ((double) height * sqrt(2)) / deltaTime;
+          long timeElapsed = speed * ((distance - 2 * height) + 2 * ((double) height * sqrt(2)));
+          delayTime = (targetTime - timeElapsed) / 2;
+
+          if (delayTime < 0) delayTime = 0;
+          else if (delayTime > 3000) delayTime = 2500;
+
+          currentTime = millis();
+          delayBool = true;
+
+          counter++;
+          ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
+          counter_FL = 0;
+          counter_FR = 0;
+        }
+        break;
+      case 2:
+        turn(0);
         counter++;
-        ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
-        counter_FL = 0;
-        counter_FR = 0;
-      }
-      break;
-    case 4:
-      turn(-45);
-      counter++;
-      break;
-    case 5:
-      stepNum = CMtoSteps((int) (height * sqrt(2)));
-      ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 150 /*speed*/);
-      if (counter_FR >= stepNum && counter_FL >= stepNum) {
+        break;
+      case 3:
+        stepNum = CMtoSteps(distance - 2 * height);
+        ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 225 /*speed*/);
+        if (counter_FR >= stepNum && counter_FL >= stepNum) {
+          counter++;
+          ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
+          counter_FL = 0;
+          counter_FR = 0;
+
+          currentTime = millis();
+          delayBool = true;
+        }
+        break;
+      case 4:
+        turn(-45);
         counter++;
+        break;
+      case 5:
+        stepNum = CMtoSteps((int) (height * sqrt(2)));
+        ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 150 /*speed*/);
+        if (counter_FR >= stepNum && counter_FL >= stepNum) {
+          counter++;
+          ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
+          counter_FL = 0;
+          counter_FR = 0;
+        }
+        break;
+      default:
         ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
-        counter_FL = 0;
-        counter_FR = 0;
-      }
-      break;
-    default:
-      ApplicationFunctionSet_ConquerorCarMotionControl(status /*direction*/, 0 /*speed*/); 
-      Serial.println("finished");
-      break;
+        Serial.println("finished");
+        break;
+    }
+  } else if (abs(millis() - currentTime) > delayTime) {
+    delayBool = false;
   }
 }
